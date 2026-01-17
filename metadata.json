@@ -1,0 +1,8 @@
+{
+  "name": "Copy of UIT Smart Waste",
+  "description": "A smart waste management system for UIT Yangon with multi-role access, campus mapping, and real-time reporting.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

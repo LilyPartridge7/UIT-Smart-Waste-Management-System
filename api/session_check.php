@@ -1,22 +1,12 @@
 <?php
-/**
- * SESSION ENFORCEMENT MIDDLEWARE - UIT Smart Waste Management
- *
- * Two modes:
- *   1. Standalone GET: Returns { loggedIn: true/false, user?: {...} }
- *   2. Included by other scripts: Provides requireRole() function
- *
- * Role Constants:
- *   Student  = 'student'
- *   Teacher  = 'teacher'
- *   Collector = 'collector'
- */
+// session management helper
+// can be used as a standalone check OR included in other files
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// ========== CORS HEADERS ==========
+// CORS stuff
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
@@ -28,15 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// ========== ROLE ENFORCEMENT FUNCTION ==========
-
-/**
- * Verifies that the current session user has one of the allowed roles.
- * If not logged in or role mismatch, returns 403 JSON and exits.
- *
- * @param array $uit_allowed_roles  e.g. ['student', 'teacher']
- * @return array  The current user's session data
- */
+// makes sure the user has the right role
+// checks if user has one of the allowed roles
 function requireRole(array $uit_allowed_roles): array {
     if (!isset($_SESSION['user_id'])) {
         http_response_code(401);
@@ -66,8 +49,7 @@ function requireRole(array $uit_allowed_roles): array {
     ];
 }
 
-// ========== STANDALONE MODE (direct GET request) ==========
-// Only output JSON if this script is called directly (not included)
+// if this file is called directly, just return the session info
 if (basename($_SERVER['SCRIPT_FILENAME']) === 'session_check.php') {
     if (isset($_SESSION['user_id'])) {
         echo json_encode([

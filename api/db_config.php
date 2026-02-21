@@ -1,8 +1,6 @@
 <?php
-/**
- * Database Configuration - UIT Smart Waste Management
- * Provides both $conn (mysqli) and $pdo (PDO) connections.
- */
+// database setup for the waste management app
+// gives you both $conn (mysqli) and $pdo (PDO)
 
 $DB_HOST = "localhost";
 $DB_USER = "root";
@@ -10,7 +8,7 @@ $DB_PASS = "";
 $DB_NAME = "db";
 $DB_PORT = 3306;
 
-// ========== MYSQLI CONNECTION (legacy, used by login/register) ==========
+// MYSQLI (old school, used for login/register)
 $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_PORT);
 
 if ($conn->connect_error) {
@@ -20,14 +18,14 @@ if ($conn->connect_error) {
 }
 $conn->set_charset("utf8mb4");
 
-// ========== PDO CONNECTION (used by all new backend modules) ==========
+// PDO (for all the newer stuff)
 $dsn = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset=utf8mb4";
 
 try {
     $pdo = new PDO($dsn, $DB_USER, $DB_PASS, [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,   // Throw exceptions on error
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,         // Return associative arrays
-        PDO::ATTR_EMULATE_PREPARES   => false,                    // Use real prepared statements
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,   // throw errors
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,         // return arrays
+        PDO::ATTR_EMULATE_PREPARES   => false,                    // keep it secure
     ]);
 } catch (PDOException $e) {
     http_response_code(500);

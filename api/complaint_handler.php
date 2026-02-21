@@ -1,17 +1,7 @@
 <?php
-/**
- * COMPLAINT HANDLER - UIT Smart Waste Management
- *
- * PHP-ONLY actions that TypeScript server actions don't have.
- * 
- * NOTE: Loading complaints, deleting complaints, collector bin queue,
- * mark-as-empty, report counts, and collection counts are ALL handled
- * by TypeScript server actions (collector.ts, getComplaints.ts).
- * This file ONLY handles collector responses.
- *
- * Actions:
- *   respond  — Collector sends a response to a complaint
- */
+// complaint handling stuff for the waste app
+// this file is for things that the typescript side doesn't do yet
+// (mainly collector replies)
 
 require_once __DIR__ . '/session_check.php';
 require_once __DIR__ . '/db_config.php';
@@ -33,8 +23,8 @@ switch ($uit_action) {
 }
 
 // ======================================================================
-//  respond_to_complaint — Collector writes a response to a complaint
-//  This is UNIQUE to PHP — TypeScript has no equivalent.
+// handler for when a collector writes back to a user
+// typescript doesn't have an equivalent for this right now
 // ======================================================================
 function respond_to_complaint(PDO $pdo, array $uit_input): void {
     $uit_user = requireRole(['collector']);

@@ -24,7 +24,7 @@ export default function CollectorHub() {
   const [collectionCount, setCollectionCount] = useState(0);
   const [liveReportCount, setLiveReportCount] = useState(0);
 
-  // ========== FETCH ALL DATA VIA TYPESCRIPT SERVER ACTIONS ==========
+  // fetch data from server actions
   const loadData = async () => {
     setIsRefreshing(true);
 
@@ -41,12 +41,12 @@ export default function CollectorHub() {
 
   useEffect(() => {
     loadData();
-    // Auto-refresh every 10 seconds
+    // refresh every 10s
     const interval = setInterval(loadData, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  // ========== MARK BIN AS EMPTY VIA TYPESCRIPT SERVER ACTION ==========
+  // mark a bin as cleared
   const handleMarkEmpty = async (building: string, level: string, side: string) => {
     const res = await markBinEmpty(building, level, side);
     if (res.success) {

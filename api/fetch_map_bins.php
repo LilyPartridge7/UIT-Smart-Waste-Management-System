@@ -5,7 +5,7 @@ header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
 
-// Handle preflight OPTIONS request
+// deal with prep stuff (OPTIONS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -13,8 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/db_config.php'; 
 
-// Fetch the "bins" with lat/lng, simulating full status based on pending reports.
-// Note: If no lat/lng exists in the bins table, they won't render. Make sure your bins table has lat/lng.
+// Grab bins and check if they're full based on reports.
+// FYI: If no lat/lng, they won't show up on the map.
 $sql = "SELECT b.id, b.lat, b.lng, 
         CASE 
             WHEN r.status = 'Pending' THEN 'Full' 

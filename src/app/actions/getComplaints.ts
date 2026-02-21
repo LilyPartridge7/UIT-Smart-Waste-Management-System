@@ -44,3 +44,15 @@ export async function deleteComplaint(email: string, date: string) {
     return { success: false };
   }
 }
+
+export async function getUnrepliedComplaintsCount() {
+  try {
+    const [rows]: any = await db.execute(
+      "SELECT COUNT(*) as count FROM complaint WHERE admin_response IS NULL OR admin_response = ''"
+    );
+    return { success: true, count: rows[0].count };
+  } catch (error) {
+    console.error("Error fetching unreplied count:", error);
+    return { success: false, count: 0 };
+  }
+}

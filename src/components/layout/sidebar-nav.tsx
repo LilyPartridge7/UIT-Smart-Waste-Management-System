@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '../auth/auth-container';
+import { useState, useEffect } from 'react';
+import { getUnrepliedComplaintsCount } from '@/app/actions/getComplaints';
 
 interface SidebarNavProps {
   role: UserRole;
@@ -23,9 +25,24 @@ interface SidebarNavProps {
 
 export function SidebarNav({ role }: SidebarNavProps) {
   const pathname = usePathname();
+  const [unrepliedCount, setUnrepliedCount] = useState(0);
 
-  // Mock checking for critical alerts (>= 3 reports)
-  const hasAlerts = true;
+  useEffect(() => {
+    if (role === 'collector') {
+      const fetchCount = async () => {
+        const res = await getUnrepliedComplaintsCount();
+        if (res.success) setUnrepliedCount(res.count);
+      };
+
+      fetchCount();
+      // refresh count every 30 seconds
+      const interval = setInterval(fetchCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [role]);
+
+  // Check for unreplied complaints
+  const hasAlerts = unrepliedCount > 0;
 
   const commonItems = [
     { label: 'Home', href: '/dashboard', icon: LayoutDashboard },

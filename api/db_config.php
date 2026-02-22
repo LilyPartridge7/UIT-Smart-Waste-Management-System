@@ -16,7 +16,7 @@ if (getenv('MYSQL_ADDON_HOST')) {
 } 
 // 2. Fallback to Local XAMPP
 else {
-    $DB_HOST = "localhost";
+    $DB_HOST = "127.0.0.1";
     $DB_USER = "root";
     $DB_PASS = ""; 
     $DB_NAME = "uit_waste_watch"; 

@@ -5,14 +5,24 @@
 // detect environment
 $is_localhost = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']);
 
-if ($is_localhost) {
+// 1. Check if we are on Clever Cloud
+if (getenv('MYSQL_ADDON_HOST')) {
+    // These variables are injected automatically by Clever Cloud
+    $DB_HOST = getenv('MYSQL_ADDON_HOST');
+    $DB_USER = getenv('MYSQL_ADDON_USER');
+    $DB_PASS = getenv('MYSQL_ADDON_PASSWORD');
+    $DB_NAME = getenv('MYSQL_ADDON_DB');
+    $DB_PORT = getenv('MYSQL_ADDON_PORT');
+} 
+// 2. Fallback to Local XAMPP
+else if ($is_localhost) {
     $DB_HOST = "localhost";
     $DB_USER = "root";
-    $DB_PASS = "";
-    $DB_NAME = "db";
+    $DB_PASS = ""; 
+    $DB_NAME = "uit_waste_watch"; 
     $DB_PORT = 3306;
 } else {
-    // CLOUD / PRODUCTION SETTINGS
+    // Other Production Settings
     $DB_HOST = "your_cloud_host";
     $DB_USER = "your_cloud_user";
     $DB_PASS = "your_cloud_password";
@@ -44,4 +54,37 @@ try {
     echo json_encode(["success" => false, "error" => "PDO connection failed: " . $e->getMessage()]);
     exit;
 }
+?>
+<?php
+/**
+ * Smart Database Configuration
+ * Works for XAMPP (Local) and Clever Cloud (Production)
+ */
+
+// 1. Check if we are on Clever Cloud
+if (getenv('MYSQL_ADDON_HOST')) {
+    // These variables are injected automatically by Clever Cloud
+    $host = getenv('MYSQL_ADDON_HOST');
+    $user = getenv('MYSQL_ADDON_USER');
+    $pass = getenv('MYSQL_ADDON_PASSWORD');
+    $name = getenv('MYSQL_ADDON_DB');
+    $port = getenv('MYSQL_ADDON_PORT');
+} 
+// 2. Fallback to Local XAMPP
+else {
+    $host = "localhost";
+    $user = "root";
+    $pass = ""; // Default XAMPP has no password
+    $name = "uit_waste_watch"; 
+    $port = "3306";
+}
+
+$conn = new mysqli($host, $user, $pass, $name, $port);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Success!
 ?>

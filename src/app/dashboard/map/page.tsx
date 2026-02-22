@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { MapPin, Navigation } from 'lucide-react';
 
+import { API_URL } from '@/lib/config';
+
 export default function MapPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [bins, setBins] = useState<any[]>([]);
@@ -13,7 +15,7 @@ export default function MapPage() {
 
   useEffect(() => {
     // 1. Fetch bins from PHP API
-    fetch('http://localhost/uit_smart_waste_management/api/fetch_map_bins.php')
+    fetch(`${API_URL}/fetch_map_bins.php`)
       .then(res => res.json())
       .then(data => {
         if (data && data.success) {

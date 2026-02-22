@@ -9,8 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Check, X } from "lucide-react";
 
-// ========== PHP API Base URL (XAMPP Apache) ==========
-const API_BASE = "http://localhost/uit_smart_waste_management/api";
+import { API_URL } from "@/lib/config";
+
 
 const passwordSchema = z.object({
     currentPassword: z.string().min(1, "Current password is required"),
@@ -60,7 +60,7 @@ export function ProfileSettings() {
         }
 
         try {
-            const res = await fetch(`${API_BASE}/change_password.php`, {
+            const res = await fetch(`${API_URL}/change_password.php`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

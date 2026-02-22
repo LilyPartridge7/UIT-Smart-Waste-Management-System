@@ -9,8 +9,8 @@ import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 
-// ========== PHP API Base URL ==========
-const API_BASE = "http://localhost/uit_smart_waste_management/api";
+import { API_URL } from "@/lib/config";
+
 
 const chartConfig = {
   reports: { label: 'Reports', color: 'hsl(var(--primary))' },
@@ -47,9 +47,9 @@ export default function DashboardPage() {
     try {
       // 1. Fetch Global analytics from PHP API
       const [buildingRes, weeklyRes, binsRes] = await Promise.all([
-        fetch(`${API_BASE}/analytics_provider.php?action=reports_by_building`, { credentials: 'include' }),
-        fetch(`${API_BASE}/analytics_provider.php?action=reports_over_time`, { credentials: 'include' }),
-        fetch(`${API_BASE}/analytics_provider.php?action=bin_status_summary`, { credentials: 'include' }),
+        fetch(`${API_URL}/analytics_provider.php?action=reports_by_building`, { credentials: 'include' }),
+        fetch(`${API_URL}/analytics_provider.php?action=reports_over_time`, { credentials: 'include' }),
+        fetch(`${API_URL}/analytics_provider.php?action=bin_status_summary`, { credentials: 'include' }),
       ]);
 
       const buildingJson = await buildingRes.json();

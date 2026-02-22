@@ -12,8 +12,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, X } from 'lucide-react';
 
-// ========== PHP API Base URL (XAMPP Apache) ==========
-const API_BASE = "http://localhost/uit_smart_waste_management/api";
+import { API_URL } from "@/lib/config";
+
 
 // --- Unified schema that covers ALL possible fields ---
 const fullSchema = z.object({
@@ -117,7 +117,7 @@ export function AuthForm({ role, onSuccess, mode }: AuthFormProps) {
     try {
       if (isLogin) {
         // --- LOGIN via PHP API ---
-        const res = await fetch(`${API_BASE}/login.php`, {
+        const res = await fetch(`${API_URL}/login.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -148,7 +148,7 @@ export function AuthForm({ role, onSuccess, mode }: AuthFormProps) {
         else if (role === 'teacher') identifier = values.faculty || "";
         else if (role === 'collector') identifier = values.staffId || "";
 
-        const res = await fetch(`${API_BASE}/register.php`, {
+        const res = await fetch(`${API_URL}/register.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

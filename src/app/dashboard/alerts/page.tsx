@@ -7,8 +7,8 @@ import { AlertTriangle, Clock, Trash2, Mail, MessageSquare, X, ZoomIn, Send, Che
 import { Button } from '@/components/ui/button';
 import { getLiveComplaints, deleteComplaint } from '@/app/actions/getComplaints';
 
-// PHP API is ONLY used for the 'respond' action (unique to PHP)
-const PHP_API = "http://localhost/uit_smart_waste_management/api";
+import { API_URL } from "@/lib/config";
+
 
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState<any[]>([]);
@@ -46,7 +46,7 @@ export default function ComplaintsPage() {
     if (!responseText.trim()) return;
     setSendingResponse(true);
     try {
-      const res = await fetch(`${PHP_API}/complaint_handler.php?action=respond`, {
+      const res = await fetch(`${API_URL}/complaint_handler.php?action=respond`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

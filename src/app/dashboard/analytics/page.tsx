@@ -5,8 +5,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { useEffect, useState } from 'react';
 
-// ========== PHP API Base URL ==========
-const API_BASE = "http://localhost/uit_smart_waste_management/api";
+import { API_URL } from "@/lib/config";
+
 
 // ========== Type definitions ==========
 interface ReportByBuilding {
@@ -56,9 +56,9 @@ export default function AnalyticsPage() {
 
       // Fetch all 3 endpoints in parallel using Promise.all
       const [buildingRes, weeklyRes, binsRes] = await Promise.all([
-        fetch(`${API_BASE}/analytics_provider.php?action=reports_by_building`, { credentials: 'include' }),
-        fetch(`${API_BASE}/analytics_provider.php?action=reports_over_time`, { credentials: 'include' }),
-        fetch(`${API_BASE}/analytics_provider.php?action=bin_status_summary`, { credentials: 'include' }),
+        fetch(`${API_URL}/analytics_provider.php?action=reports_by_building`, { credentials: 'include' }),
+        fetch(`${API_URL}/analytics_provider.php?action=reports_over_time`, { credentials: 'include' }),
+        fetch(`${API_URL}/analytics_provider.php?action=bin_status_summary`, { credentials: 'include' }),
       ]);
 
       // Parse JSON responses

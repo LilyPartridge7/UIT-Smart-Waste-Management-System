@@ -24,7 +24,7 @@ export async function getUserComplaints(email: string) {
         // If you want to show 'requests', maybe we just show the latest status or the whole thread?
         // The prompt says: "what noti is in their complaint". likely "admin_response".
         const [rows]: any = await db.execute(
-            "SELECT message, admin_response, status, report_date FROM complaint WHERE user_email = ? ORDER BY updated_at DESC",
+            "SELECT message, admin_response, status, report_date FROM complaint WHERE user_email = ? ORDER BY updated_at DESC, report_date DESC",
             [email]
         );
 

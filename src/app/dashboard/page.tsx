@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const [totalBins, setTotalBins] = useState(0);
   const [fullBins, setFullBins] = useState(0);
   const [cleanRate, setCleanRate] = useState(0);
+  const [todayReports, setTodayReports] = useState(0);
 
   useEffect(() => {
     const role = localStorage.getItem('user_role');
@@ -45,50 +46,44 @@ export default function DashboardPage() {
 
   async function fetchDashboardData() {
     try {
-      // 1. Fetch Global analytics from PHP API
-      const [buildingRes, weeklyRes, binsRes] = await Promise.all([
-        fetch(`${API_URL}/analytics_provider.php?action=reports_by_building`, { credentials: 'include' }),
-        fetch(`${API_URL}/analytics_provider.php?action=reports_over_time`, { credentials: 'include' }),
-        fetch(`${API_URL}/analytics_provider.php?action=bin_status_summary`, { credentials: 'include' }),
-      ]);
+      // Single API call for all dashboard data (no session required)
+      const res = await fetch(`${API_URL}/analytics_provider.php?action=dashboard_overview`, {
+        credentials: 'include',
+      });
+      const json = await res.json();
 
-      const buildingJson = await buildingRes.json();
-      const weeklyJson = await weeklyRes.json();
-      const binsJson = await binsRes.json();
+      if (json.success) {
+        // --- Key Metrics ---
+        setCleanRate(json.campus_cleanliness || 0);
+        setTotalBins(json.active_bins || 0);
+        setFullBins(json.full_bins || 0);
+        setTotalReports(json.total_reports || 0);
+        setTodayReports(json.today_reports || 0);
 
-      // --- Building bar chart data ---
-      if (buildingJson.success && buildingJson.chart) {
-        const labels = buildingJson.chart.labels as string[];
-        const data = buildingJson.chart.datasets[0].data as number[];
-        setBuildingData(labels.map((name: string, i: number) => ({
-          name,
-          reports: data[i] || 0,
-        })));
-        setTotalReports(data.reduce((a: number, b: number) => a + b, 0));
+        // --- Weekly Area Chart (Mon - Sun) ---
+        if (json.weekly_chart) {
+          const labels: string[] = json.weekly_chart.labels;
+          const reports: number[] = json.weekly_chart.reports;
+          const collections: number[] = json.weekly_chart.collections;
+          setChartData(labels.map((day: string, i: number) => ({
+            day,
+            reports: reports[i] || 0,
+            collections: collections[i] || 0,
+          })));
+        }
+
+        // --- Building Bar Chart (Bldg 1, 2, 3, 4) ---
+        if (json.building_chart) {
+          const labels: string[] = json.building_chart.labels;
+          const data: number[] = json.building_chart.data;
+          setBuildingData(labels.map((name: string, i: number) => ({
+            name,
+            reports: data[i] || 0,
+          })));
+        }
       }
 
-      // --- Weekly area chart data ---
-      if (weeklyJson.success && weeklyJson.chart) {
-        const labels = weeklyJson.chart.labels as string[];
-        const data = weeklyJson.chart.datasets[0].data as number[];
-        setChartData(labels.map((dateStr: string, i: number) => {
-          const date = new Date(dateStr);
-          const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-          return { day: dayName, reports: data[i] || 0, collections: Math.max(0, (data[i] || 0) - Math.floor(Math.random() * 3)) };
-        }));
-      }
-
-      // --- Bins summary ---
-      if (binsJson.success) {
-        setTotalBins(binsJson.total_bins || 0);
-        setFullBins(binsJson.full_bins || 0);
-        const rate = binsJson.total_bins
-          ? Math.round(((binsJson.total_bins - binsJson.full_bins) / binsJson.total_bins) * 100 * 10) / 10
-          : 0;
-        setCleanRate(rate);
-      }
-
-      // 2. Fetch User-specific data from Next.js Server Actions
+      // Fetch User-specific data from Next.js Server Actions
       const userEmail = localStorage.getItem('user_email');
       if (userEmail && (localStorage.getItem('user_role') === 'student' || localStorage.getItem('user_role') === 'teacher')) {
         const [reportsRes, complaintsRes]: any = await Promise.all([
@@ -108,7 +103,7 @@ export default function DashboardPage() {
   const stats = [
     { title: 'Campus Cleanliness', value: `${cleanRate}%`, sub: 'Based on bin status', color: 'text-primary' },
     { title: 'Active Bins', value: `${totalBins}`, sub: `${fullBins} needing attention`, color: 'text-yellow-500' },
-    { title: 'Total Reports', value: `${totalReports}`, sub: 'From MySQL database', color: 'text-blue-500' },
+    { title: 'Total Reports', value: `${totalReports}`, sub: `Today: ${todayReports}`, color: 'text-blue-500' },
   ];
 
   return (
@@ -116,7 +111,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-headline font-bold text-foreground">Campus Overview</h2>
-          <p className="text-muted-foreground">Live data from MySQL — auto-refreshes every 30s.</p>
+          <p className="text-muted-foreground">Live data — auto-refreshes every 30s.</p>
         </div>
         <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
           <MapPin className="w-4 h-4" />
@@ -156,7 +151,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="mt-4">
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
-              <AreaChart data={chartData}>
+              <AreaChart data={chartData} margin={{ left: 10, right: 10 }}>
                 <defs>
                   <linearGradient id="colorReports" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-reports)" stopOpacity={0.3} />
@@ -168,7 +163,7 @@ export default function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} dy={10} />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} dy={10} padding={{ left: 20, right: 20 }} />
                 <YAxis hide />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Area type="monotone" dataKey="reports" stroke="var(--color-reports)" fillOpacity={1} fill="url(#colorReports)" strokeWidth={2} />
@@ -197,7 +192,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} dy={10} />
                 <YAxis hide />
                 <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="reports" fill="var(--color-reports)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="reports" fill="#00ced1" radius={[4, 4, 0, 0]} />
               </ReBarChart>
             </ChartContainer>
           </CardContent>

@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
         <div>
           <h2 className="text-3xl font-headline font-bold">Analytical Dashboard</h2>
           <p className="text-muted-foreground">
-            {isLoading ? "Loading live data..." : "Live data from MySQL — auto-refreshes every 30s."}
+            {isLoading ? "Loading live data..." : "Live data  — auto-refreshes every 30s."}
           </p>
         </div>
         {/* Manual Refresh Button */}
@@ -178,7 +178,7 @@ export default function AnalyticsPage() {
         {/* ========== LINE CHART: Weekly Waste Trends ========== */}
         <Card className="bg-card/50 border-border/50">
           <CardHeader>
-            <CardTitle>Weekly Waste Activity</CardTitle>
+            <CardTitle>Monthly Waste Activity</CardTitle>
             <CardDescription>
               {weeklyData.length > 0
                 ? `Reports per day (last 30 days)`
@@ -216,7 +216,7 @@ export default function AnalyticsPage() {
           {
             label: 'Total Reports',
             value: isLoading ? '...' : String(stats.total_reports),
-            change: 'From MySQL'
+            change: 'From Live'
           },
           {
             label: 'Full Bins',

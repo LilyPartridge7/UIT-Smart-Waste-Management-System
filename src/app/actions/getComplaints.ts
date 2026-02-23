@@ -56,3 +56,27 @@ export async function getUnrepliedComplaintsCount() {
     return { success: false, count: 0 };
   }
 }
+
+// Collector responds to a complaint — updates admin_response and status
+export async function respondToComplaint(
+  complaintId: number,
+  response: string,
+  status: string
+) {
+  try {
+    const [result]: any = await db.execute(
+      "UPDATE complaint SET admin_response = ?, status = ? WHERE id = ?",
+      [response, status, complaintId]
+    );
+
+    if (result.affectedRows === 0) {
+      return { success: false, error: "Complaint not found." };
+    }
+
+    revalidatePath("/dashboard/alerts");
+    return { success: true, message: "Response sent to the reporter." };
+  } catch (error) {
+    console.error("Error responding to complaint:", error);
+    return { success: false, error: "Database update failed." };
+  }
+}

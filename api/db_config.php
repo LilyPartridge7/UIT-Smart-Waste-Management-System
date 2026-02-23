@@ -3,25 +3,25 @@
 // gives you both $conn (mysqli) and $pdo (PDO)
 
 // detect environment
-$is_localhost = in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']);
+$is_localhost = in_array($_SERVER['HTTP_HOST'] ?? 'localhost', ['localhost', '127.0.0.1']);
 
 // 1. Check if we are on Clever Cloud
 if (getenv('MYSQL_ADDON_HOST')) {
-    // These variables are injected automatically by Clever Cloud
     $DB_HOST = getenv('MYSQL_ADDON_HOST');
     $DB_USER = getenv('MYSQL_ADDON_USER');
     $DB_PASS = getenv('MYSQL_ADDON_PASSWORD');
     $DB_NAME = getenv('MYSQL_ADDON_DB');
     $DB_PORT = getenv('MYSQL_ADDON_PORT');
-} 
+}
 // 2. Fallback to Local XAMPP
 else {
     $DB_HOST = "127.0.0.1";
     $DB_USER = "root";
-    $DB_PASS = ""; 
-    $DB_NAME = "uit_waste_watch"; 
+    $DB_PASS = "password";
+    $DB_NAME = "db";
     $DB_PORT = 3306;
 }
+
 // MYSQLI (old school, used for login/register)
 $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_PORT);
 

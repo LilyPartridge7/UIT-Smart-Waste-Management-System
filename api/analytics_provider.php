@@ -7,43 +7,182 @@
  * JSON arrays formatted for Chart.js on the frontend.
  *
  * Actions (GET ?action=...):
- *   reports_by_building       — Bar chart data: report counts per building
- *   cleaning_completion_rate  — Pie chart data: cleaned vs pending vs full
- *   reports_over_time         — Line chart data: reports per day (last 30 days)
- *   bin_status_summary        — Summary of all bin statuses
+ *   dashboard_overview         — All-in-one dashboard home page data (no auth)
+ *   reports_by_building        — Bar chart data: report counts per building
+ *   cleaning_completion_rate   — Pie chart data: cleaned vs pending vs full
+ *   reports_over_time          — Line chart data: reports per day (last 30 days)
+ *   bin_status_summary         — Summary of all bin statuses
  */
-
-require_once __DIR__ . '/session_check.php';
-require_once __DIR__ . '/db_config.php';
-
-// All roles can view analytics
-$uit_current_user = requireRole(['student', 'teacher', 'collector']);
 
 $uit_action = $_GET['action'] ?? '';
 
-switch ($uit_action) {
-    case 'reports_by_building':
-        get_reports_by_building($pdo);
-        break;
+// All analytics endpoints are read-only campus data — no login required.
+// Set CORS headers for all public analytics endpoints.
+$uit_public_actions = [
+    'dashboard_overview',
+    'reports_by_building',
+    'cleaning_completion_rate',
+    'reports_over_time',
+    'bin_status_summary',
+];
 
-    case 'cleaning_completion_rate':
-        get_cleaning_completion_rate($pdo);
-        break;
+if (in_array($uit_action, $uit_public_actions)) {
+    header("Content-Type: application/json");
+    header("Access-Control-Allow-Origin: http://localhost:3000");
+    header("Access-Control-Allow-Methods: GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type");
+    header("Access-Control-Allow-Credentials: true");
 
-    case 'reports_over_time':
-        get_reports_over_time($pdo);
-        break;
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        exit;
+    }
 
-    case 'bin_status_summary':
-        get_bin_status_summary($pdo);
-        break;
+    require_once __DIR__ . '/db_config.php';
 
-    default:
-        http_response_code(400);
+    switch ($uit_action) {
+        case 'dashboard_overview':
+            get_dashboard_overview($pdo);
+            break;
+        case 'reports_by_building':
+            get_reports_by_building($pdo);
+            break;
+        case 'cleaning_completion_rate':
+            get_cleaning_completion_rate($pdo);
+            break;
+        case 'reports_over_time':
+            get_reports_over_time($pdo);
+            break;
+        case 'bin_status_summary':
+            get_bin_status_summary($pdo);
+            break;
+    }
+    exit;
+}
+
+// Fallback for unknown actions
+header("Content-Type: application/json");
+http_response_code(400);
+echo json_encode([
+    "success" => false,
+    "error"   => "Invalid action. Use: dashboard_overview, reports_by_building, cleaning_completion_rate, reports_over_time, bin_status_summary."
+]);
+
+// ======================================================================
+//  FUNCTION: get_dashboard_overview
+//  All-in-one endpoint for the Dashboard Home page.
+//  Returns key metrics, weekly chart, and building chart in one call.
+//  Does NOT require authentication — public campus overview data.
+// ======================================================================
+function get_dashboard_overview(PDO $pdo): void {
+    try {
+        // --- 1. Campus Cleanliness: (empty bins / total bins) * 100 ---
+        $uit_bins_stmt = $pdo->query("
+            SELECT status, COUNT(*) as cnt FROM bins GROUP BY status
+        ");
+        $uit_bin_statuses = $uit_bins_stmt->fetchAll();
+
+        $uit_total_bins = 0;
+        $uit_empty_bins = 0;
+        $uit_full_bins  = 0;
+        foreach ($uit_bin_statuses as $row) {
+            $uit_total_bins += (int)$row['cnt'];
+            if ($row['status'] === 'empty')  $uit_empty_bins = (int)$row['cnt'];
+            if ($row['status'] === 'full')   $uit_full_bins  = (int)$row['cnt'];
+        }
+
+        $uit_campus_cleanliness = $uit_total_bins > 0
+            ? round(($uit_empty_bins / $uit_total_bins) * 100)
+            : 0;
+
+        // --- 2. Total Reports ---
+        $uit_total_reports = (int)$pdo->query("SELECT COUNT(*) FROM reports")->fetchColumn();
+
+        // --- 3. Today's Reports ---
+        $uit_today_reports = (int)$pdo->query("
+            SELECT COUNT(*) FROM reports WHERE DATE(created_at) = CURDATE()
+        ")->fetchColumn();
+
+        // --- 4. Weekly Waste Activity (Mon - Sun, current week) ---
+        // Day mapping: MySQL DAYOFWEEK: 1=Sun,2=Mon,3=Tue,4=Wed,5=Thu,6=Fri,7=Sat
+        // We want Mon(2) through Sun(1)
+        $uit_day_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        $uit_day_map    = [2 => 0, 3 => 1, 4 => 2, 5 => 3, 6 => 4, 7 => 5, 1 => 6]; // DAYOFWEEK -> index
+
+        $uit_reports_week = array_fill(0, 7, 0);
+        $uit_collections_week = array_fill(0, 7, 0);
+
+        // All reports this week grouped by day-of-week
+        $uit_weekly_stmt = $pdo->query("
+            SELECT DAYOFWEEK(created_at) as dow, COUNT(*) as cnt
+            FROM reports
+            WHERE YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
+            GROUP BY DAYOFWEEK(created_at)
+        ");
+        foreach ($uit_weekly_stmt->fetchAll() as $row) {
+            $dow = (int)$row['dow'];
+            if (isset($uit_day_map[$dow])) {
+                $uit_reports_week[$uit_day_map[$dow]] = (int)$row['cnt'];
+            }
+        }
+
+        // Completed collections this week (reports with status 'Cleared')
+        $uit_coll_stmt = $pdo->query("
+            SELECT DAYOFWEEK(created_at) as dow, COUNT(*) as cnt
+            FROM reports
+            WHERE status = 'Cleared'
+              AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
+            GROUP BY DAYOFWEEK(created_at)
+        ");
+        foreach ($uit_coll_stmt->fetchAll() as $row) {
+            $dow = (int)$row['dow'];
+            if (isset($uit_day_map[$dow])) {
+                $uit_collections_week[$uit_day_map[$dow]] = (int)$row['cnt'];
+            }
+        }
+
+        // --- 5. Reports by Building ---
+        $uit_bldg_stmt = $pdo->query("
+            SELECT building, COUNT(*) as cnt
+            FROM reports
+            GROUP BY building
+            ORDER BY building ASC
+        ");
+        $uit_bldg_rows = $uit_bldg_stmt->fetchAll();
+
+        $uit_bldg_labels = [];
+        $uit_bldg_data   = [];
+        foreach ($uit_bldg_rows as $row) {
+            $uit_bldg_labels[] = "Bldg " . $row['building'];
+            $uit_bldg_data[]   = (int)$row['cnt'];
+        }
+
+        // --- Build response ---
+        echo json_encode([
+            "success"             => true,
+            "campus_cleanliness"  => $uit_campus_cleanliness,
+            "active_bins"         => $uit_total_bins,
+            "full_bins"           => $uit_full_bins,
+            "total_reports"       => $uit_total_reports,
+            "today_reports"       => $uit_today_reports,
+            "weekly_chart"        => [
+                "labels"      => $uit_day_labels,
+                "reports"     => $uit_reports_week,
+                "collections" => $uit_collections_week,
+            ],
+            "building_chart"      => [
+                "labels" => $uit_bldg_labels,
+                "data"   => $uit_bldg_data,
+            ],
+        ]);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
         echo json_encode([
             "success" => false,
-            "error"   => "Invalid action. Use: reports_by_building, cleaning_completion_rate, reports_over_time, bin_status_summary."
+            "error"   => "Dashboard query failed: " . $e->getMessage()
         ]);
+    }
 }
 
 // ======================================================================

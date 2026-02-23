@@ -5,9 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Clock, Trash2, Mail, MessageSquare, X, ZoomIn, Send, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getLiveComplaints, deleteComplaint } from '@/app/actions/getComplaints';
-
-import { API_URL } from "@/lib/config";
+import { getLiveComplaints, deleteComplaint, respondToComplaint } from '@/app/actions/getComplaints';
 
 
 export default function ComplaintsPage() {
@@ -20,6 +18,14 @@ export default function ComplaintsPage() {
   const [responseText, setResponseText] = useState("");
   const [responseStatus, setResponseStatus] = useState("Responded");
   const [sendingResponse, setSendingResponse] = useState(false);
+
+  // ========== TOAST NOTIFICATION STATE ==========
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   // ========== LOAD COMPLAINTS VIA TYPESCRIPT SERVER ACTION ==========
   const loadData = async () => {
@@ -41,36 +47,42 @@ export default function ComplaintsPage() {
     if (res.success) loadData();
   };
 
-  // ========== RESPOND VIA PHP (the only PHP call on this page) ==========
+  // ========== RESPOND VIA NEXT.JS SERVER ACTION ==========
   const handleRespond = async (complaintId: number) => {
     if (!responseText.trim()) return;
     setSendingResponse(true);
     try {
-      const res = await fetch(`${API_URL}/complaint_handler.php?action=respond`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          complaint_id: complaintId,
-          response: responseText,
-          status: responseStatus,
-        }),
-      });
-      const json = await res.json();
-      if (json.success) {
+      const result = await respondToComplaint(complaintId, responseText, responseStatus);
+      if (result.success) {
         setRespondingTo(null);
         setResponseText("");
         setResponseStatus("Responded");
+        showToast("✅ Response sent successfully!", "success");
         loadData(); // Refresh to show the response
+      } else {
+        showToast(`❌ Failed: ${result.error || "Unknown error"}`, "error");
       }
     } catch (err) {
       console.error("Respond error:", err);
+      showToast("❌ Something went wrong. Please try again.", "error");
     }
     setSendingResponse(false);
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 relative">
+
+      {/* --- TOAST NOTIFICATION --- */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 z-[110] px-5 py-3 rounded-xl shadow-2xl text-white font-semibold text-sm animate-in slide-in-from-top-2 duration-300 ${toast.type === 'success'
+            ? 'bg-green-600 border border-green-400'
+            : 'bg-red-600 border border-red-400'
+            }`}
+        >
+          {toast.message}
+        </div>
+      )}
 
       {/* --- FULL SCREEN IMAGE MODAL --- */}
       {selectedImage && (

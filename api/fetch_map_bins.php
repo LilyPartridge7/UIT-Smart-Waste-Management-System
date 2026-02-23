@@ -15,13 +15,15 @@ require_once __DIR__ . '/db_config.php';
 
 // Grab bins and check if they're full based on reports.
 // FYI: If no lat/lng, they won't show up on the map.
-$sql = "SELECT b.id, b.lat, b.lng, 
-        CASE 
-            WHEN r.status = 'Pending' THEN 'Full' 
-            ELSE 'Functional' 
-        END as status 
+$sql = "SELECT b.id, b.lat, b.lng, b.building_id, b.level, 
+        IF(COUNT(r.id) > 0, 'Full', 'Functional') as status 
         FROM bins b
-        LEFT JOIN reports r ON b.location_id = r.location_id AND r.status = 'Pending'";
+        LEFT JOIN reports r 
+          ON b.building_id = r.building 
+         AND b.level = r.level 
+         AND b.side = r.side 
+         AND r.status = 'Pending'
+        GROUP BY b.id";
 
 $result = $conn->query($sql);
 $bins = [];

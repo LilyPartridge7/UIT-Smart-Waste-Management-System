@@ -78,6 +78,7 @@ Server Actions connect to MySQL via the `mysql2` Node.js driver. PHP endpoints c
 | Backend API | PHP 8+ (XAMPP for local, Clever Cloud for prod) |
 | Icons | Lucide React |
 | Fonts | Inter + Space Grotesk (Google Fonts) |
+| 3D Rendering | Three.js + Mapbox GL |
 | AI | Genkit + Google Gemini 2.5 Flash (scaffolded) |
 
 ---
@@ -335,10 +336,13 @@ uit_smart_waste_management/
 - Uses `submitComplaintMessage()` Server Action
 - Shows previous complaints and admin responses
 
-#### `map/page.tsx` — Campus Map
-- Displays bin locations on an interactive map
-- Color-coded markers: green (Functional), red (Full)
-- Fetches data from `fetch_map_bins.php`
+#### `map/page.tsx` — 3D Campus Model & Map
+- Interactive **3D Digital Twin** of the 4-building UIT Yangon Hlaing Campus on Parami Road
+- Custom `mapbox-gl` layer integrated with `three.js` to render procedural building geometry
+- Architectural details: Concrete frame, glass curtain walls, louvers, basement zones, and a massive solar canopy
+- **Floor Switcher**: Toggle visibility of floors (Levels 1–6, Basement) to reveal interior room nodes
+- Interactive room nodes implement the campus **X-Notation** logic (e.g., `B1 – L4: Near Room 142`)
+- Fetches real-time bin status from `fetch_map_bins.php` and shows alert pulses for full bins
 
 #### `analytics/page.tsx` — Collector Analytics
 - Data visualization page for waste collectors

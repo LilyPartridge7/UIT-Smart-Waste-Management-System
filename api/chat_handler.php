@@ -2,9 +2,6 @@
 /**
  * CHAT HANDLER - Complaint-as-Chat System
  * UIT Smart Waste Management System
- *
- * Replaces the old complaint form with real-time conversation.
- *
  * Actions (POST ?action=...):
  *   initiate_chat  — Student/Teacher creates a new chat session
  *   send_message   — Either party sends a message
@@ -221,12 +218,13 @@ function get_sessions(PDO $pdo): void {
     $uit_sessions_stmt = $pdo->prepare("
         SELECT cs.id, cs.status, cs.created_at, cs.bin_id,
                reporter.name AS reporter_name,
-               collector.name AS collector_name
+               collector.name AS collector_name,
+               (SELECT MAX(created_at) FROM messages WHERE session_id = cs.id) AS last_message_time
         FROM chat_sessions cs
         JOIN users reporter ON cs.reporter_id = reporter.id
         LEFT JOIN users collector ON cs.collector_id = collector.id
         WHERE cs.reporter_id = :uid OR cs.collector_id = :uid2
-        ORDER BY cs.created_at DESC
+        ORDER BY COALESCE(last_message_time, cs.created_at) DESC
     ");
     $uit_sessions_stmt->execute([':uid' => $uit_user['id'], ':uid2' => $uit_user['id']]);
     $uit_sessions = $uit_sessions_stmt->fetchAll();

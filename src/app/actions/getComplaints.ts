@@ -17,7 +17,7 @@ export async function getLiveComplaints() {
         image_url, 
         DATE_FORMAT(CONVERT_TZ(report_date, '+00:00', '+06:30'), '%Y-%m-%d') as report_date 
       FROM complaint
-      ORDER BY report_date DESC
+      ORDER BY updated_at DESC
     `);
 
     // We stringify the data to ensure the Date objects from MySQL don't disappear

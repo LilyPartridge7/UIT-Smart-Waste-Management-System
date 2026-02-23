@@ -458,7 +458,7 @@ export default function LodgeComplaintPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [messages]);
 
   // --- GET COMPLAINTS HISTORY ON LOAD ---
@@ -473,13 +473,6 @@ export default function LodgeComplaintPage() {
         // the Next.js DB call doesn't order. Let's assume order is fine.
         res.complaints.forEach((c: any) => {
           const photos = c.image_url ? c.image_url.split(',') : [];
-          history.push({
-            text: c.message,
-            sender: 'user',
-            photo: photos[0],
-            time: new Date(c.report_date).toLocaleDateString()
-          });
-
           if (c.admin_response) {
             history.push({
               text: c.admin_response,
@@ -487,6 +480,13 @@ export default function LodgeComplaintPage() {
               time: 'Reply'
             });
           }
+
+          history.push({
+            text: c.message,
+            sender: 'user',
+            photo: photos[0],
+            time: new Date(c.report_date).toLocaleDateString()
+          });
         });
         setMessages(history);
       }
@@ -516,7 +516,7 @@ export default function LodgeComplaintPage() {
     try {
       const response = await submitComplaintMessage(formData);
       if (response.success) {
-        setMessages(prev => [...prev, { text: input, photo: response.imageUrl, sender: 'user', time: 'Just now' }]);
+        setMessages(prev => [{ text: input, photo: response.imageUrl, sender: 'user', time: 'Just now' }, ...prev]);
         setInput('');
         setSelectedFile(null);
       }
